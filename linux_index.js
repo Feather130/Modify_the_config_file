@@ -1,46 +1,92 @@
 const fs = require('fs')
 const path = require('path')
 const buffer = require('buffer')
-const os = require('os')
-let s = []
 
 function readdirs(file) {
-    let stat
-    let fliePath = []
-    let files = fs.readdirSync(file)
-    for (let i = 0; i < files.length; i++) {
-        stat = fs.lstatSync(`${file}\/${files[i]}`)
-        if (stat.isDirectory()) {
-            if (files[i] === '.git') {
-                fliePath.push(`${file}\/${files[i]}\/config`)
-            }
-            readdirs(`${file}\/${files[i]}`) //TODO 动态递归
-        }
-    }
-    if (fliePath.length != 0) s.push(fliePath)
-    console.log(s)
-    return fliePath
-        //return new Promise((resolve, reject) => {
-        // fs.readdir(file, (err, files) => {
-        //         let stat
-        //         let fliePath = []
-        //         for (let i = 0; i < files.length; i++) {
-        //             stat = fs.lstatSync(`${file}\/${files[i]}`)
-        //             if (stat.isDirectory()) {
-        //                 if (files[i] === '.git') {
-        //                     fliePath.push(`${file}\/${files[i]}\/config`)
-        //                 }
-        //                 readdirs(`${file}\/${files[i]}`)
-        //             }
-        //         }
-        //         console.log(fliePath)
-        //         resolve(fliePath)
-        //         return fliePath
-        //     })
-        //})
+	let stat
+	let fliePath = []
+	let pathList = function fn(file, fliePath) {
+		let files = fs.readdirSync(file)
+		for (let i = 0; i < files.length; i++) {
+			stat = fs.lstatSync(`${file}\\${files[i]}`)
+			if (stat.isDirectory()) {
+				if (files[i] === '.git') {
+					let temp = `${file}\\${files[i]}\\config`
+					fliePath.push(temp)
+				}
+				fn(`${file}\\${files[i]}`, fliePath)
+			}
+		}
+		return fliePath
+	}
+	return pathList(file, fliePath)
 }
-console.log(readdirs(__dirname))
 
+let paths = readdirs(__dirname)
+
+for (let i = 0; i < paths.length; i++) {
+	let buf = Buffer.alloc(500)
+	let buf1 = Buffer.from('Feather130')
+	fs.open(paths[i], 'r+', (err, fd) => {
+		fs.read(fd, buf, 0, 500, 0, (err, bytesRead, buffer) => {
+			let position = buffer.indexOf(buf1)
+			if (position > -1) {
+				let text = buffer.toString('utf8')
+				let replaceText = text.replace('Feather150', 'Feather130')
+				console.log(replaceText.length)
+				// let buf2 = Buffer.from(replaceText)
+				// let buf2Length = buf2.length
+				// fs.write(fd, buf2, 0, buf2Length, 0, (err, bytesRead, buffer) => {
+				// 	if (err) throw err
+				// 	console.log(`${paths[i]} 修改成功`)
+				// })
+			} else {
+				console.log(`${paths[i]}没有找到对应内容,修改失败`)
+			}
+		})
+	})
+}
+
+
+
+/*function readdirs(){
+	let stat
+	let fliePath = []
+	let temp = arr;
+	let files = fs.readdirSync(file)
+	for (let i = 0; i < files.length; i++) {
+		stat = fs.lstatSync(`${file}\\${files[i]}`)
+		if (stat.isDirectory()) {
+			if (files[i] === '.git') {
+				let fliePath = `${file}\\${files[i]}\\config`
+				arr.push(fliePath)
+				temp[i] = (fliePath)
+			}
+			arguments.callee(`${file}\\${files[i]}`, arr)
+		}
+	}
+	return arr
+}*/
+
+/*function readdirs(){
+	return new Promise((resolve, reject) => {
+		fs.readdir(file, (err, files) => {
+			let stat
+			let fliePath = []
+			for (let i = 0; i < files.length; i++) {
+				stat = fs.lstatSync(`${file}\\${files[i]}`)
+				if (stat.isDirectory()) {
+					if (files[i] === '.git') {
+						fliePath.push(`${file}\\${files[i]}\\config`)
+					}
+					readdirs(`${file}\\${files[i]}`)
+				}
+			}
+			console.log(fliePath)
+			resolve(fliePath)
+		})
+	})
+}*/
 
 
 /* const zoom1 = fs.readdirSync(__dirname)
